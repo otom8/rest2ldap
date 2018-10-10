@@ -1,55 +1,382 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-	<groupId>otom8</groupId>
-	<artifactId>rest2ldap</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
-	<packaging>war</packaging>
+    <groupId>otom8</groupId>
+    <artifactId>rest2ldap</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>war</packaging>
 
-	<name>rest2ldap</name>
-	<description>Demo project for Spring Boot</description>
+    <name>rest2ldap</name>
+    <description>Demo project for Spring Boot</description>
 
-	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.0.5.RELEASE</version>
-		<relativePath/> <!-- lookup parent from repository -->
-	</parent>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.0.5.RELEASE</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
 
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<java.version>1.8</java.version>
-	</properties>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <java.version>1.8</java.version>
+        <skip.unit.tests>false</skip.unit.tests>
+        <skip.integration.tests>true</skip.integration.tests>
 
-	<dependencies>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-actuator</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-ldap</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-rest</artifactId>
-		</dependency>
+        <!-- Testing properties -->
+        <skipTests>false</skipTests>
+        <skipUnitTests>${skipTests}</skipUnitTests>
+        <skipIntegrationTests>${skipTests}</skipIntegrationTests>
+        <jvmArgs></jvmArgs>
 
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
-		</dependency>
+        <!-- Static code analysis -->
+        <sonar.coverage.exclusions>**/application/config/*</sonar.coverage.exclusions>
+    </properties>
 
-		<dependency>
-			<groupId>commons-lang</groupId>
-			<artifactId>commons-lang</artifactId>
-			<version>2.6</version>
-			<scope>compile</scope>
-		</dependency>
+    <profiles>
+        <!--<profile>-->
+            <!--<id>dev</id>-->
+            <!--<activation>-->
+                <!--<activeByDefault>true</activeByDefault>-->
+            <!--</activation>-->
+        <!--</profile>-->
+        <!--<profile>-->
+            <!--<id>test</id>-->
+            <!--<properties>-->
+                <!--&lt;!&ndash;-->
+                   <!--Only end-to-end tests are run when the end-to-end-test profile is active-->
+                <!--&ndash;&gt;-->
+                <!--<junit.category>com.testwithspring.intermediate.EndToEndTest</junit.category>-->
+                <!--<skip.failsafe.plugin>false</skip.failsafe.plugin>-->
+                <!--<skip.unit.tests>true</skip.unit.tests>-->
+            <!--</properties>-->
+        <!--</profile>-->
+        <!--<profile>-->
+            <!--<id>integration-test</id>-->
+            <!--<properties>-->
+                <!--&lt;!&ndash;-->
+                    <!--Only integration tests are run when the integration-test profile is active-->
+                <!--&ndash;&gt;-->
+                <!--<junit.category>com.testwithspring.intermediate.IntegrationTest</junit.category>-->
+                <!--<skip.failsafe.plugin>false</skip.failsafe.plugin>-->
+                <!--<skip.unit.tests>true</skip.unit.tests>-->
+            <!--</properties>-->
+        <!--</profile>-->
+        <!-- Compile with debugging info -->
+        <profile>
+            <id>compile-with-debug</id>
+            <properties>
+                <maven.compiler.debug>true</maven.compiler.debug>
+                <maven.compiler.debuglevel>lines,vars,source</maven.compiler.debuglevel>
+                <maven.compiler.verbose>true</maven.compiler.verbose>
+            </properties>
+        </profile>
+        <!-- Write the build.properties file with POM, Git, and CI info -->
+        <profile>
+            <id>generate-build-properties</id>
+            <activation>
+                <file>
+                    <exists>${basedir}/src</exists>
+                </file>
+            </activation>
+            <properties>
+                <ci.build.number/>
+                <ci.build.tag/>
+                <ci.build.url/>
+            </properties>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <!-- Set Git info as Maven properties -->
+                        <plugin>
+                            <groupId>pl.project13.maven</groupId>
+                            <artifactId>git-commit-id-plugin</artifactId>
+                            <version>2.2.3</version>
+                            <executions>
+                                <execution>
+                                    <id>set-git-properties</id>
+                                    <goals>
+                                        <goal>revision</goal>
+                                    </goals>
+                                </execution>
+                                <execution>
+                                    <id>validate-the-git-infos</id>
+                                    <goals>
+                                        <goal>validateRevision</goal>
+                                    </goals>
+                                    <phase>package</phase>
+                                </execution>
+                            </executions>
+                            <configuration>
+                                <dotGitDirectory>${project.basedir}/.git</dotGitDirectory>
+                                <prefix>git</prefix>
+                                <verbose>false</verbose>
+                                <generateGitPropertiesFile>true</generateGitPropertiesFile>
+                                <generateGitPropertiesFilename>${project.build.directory}/git.properties</generateGitPropertiesFilename>
+                                <format>json</format>
+                                <gitDescribe>
+                                    <skip>false</skip>
+                                    <always>false</always>
+                                    <dirty>-dirty</dirty>
+                                </gitDescribe>
+                                <!--<validationProperties>-->
+                                    <!--&lt;!&ndash; verify that the current repository is not dirty &ndash;&gt;-->
+                                    <!--<validationProperty>-->
+                                        <!--<name>validating git dirty</name>-->
+                                        <!--<value>${git.dirty}</value>-->
+                                        <!--<shouldMatchTo>false</shouldMatchTo>-->
+                                    <!--</validationProperty>-->
+                                <!--</validationProperties>-->
+                                <failOnNoGitDirectory>false</failOnNoGitDirectory>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+                <!-- Use in lifecycle -->
+                <plugins>
+                    <plugin>
+                        <groupId>pl.project13.maven</groupId>
+                        <artifactId>git-commit-id-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- Run unit tests with code coverage -->
+        <profile>
+            <id>unit-test</id>
+            <activation>
+                <file>
+                    <exists>${basedir}/src/test</exists>
+                </file>
+            </activation>
+            <properties>
+                <testAgent></testAgent>
+            </properties>
+            <build>
+                <pluginManagement>
+                    <plugins>
+
+                        <!-- Code Coverage -->
+                        <plugin>
+                            <groupId>org.jacoco</groupId>
+                            <artifactId>jacoco-maven-plugin</artifactId>
+                            <configuration>
+                                <excludes>
+                                    <exclude>${sonar.coverage.exclusions}</exclude>
+                                </excludes>
+                            </configuration>
+                            <executions>
+
+                                <!-- Before running unit tests -->
+                                <execution>
+                                    <id>preTest</id>
+                                    <phase>process-test-classes</phase>
+                                    <goals>
+                                        <goal>prepare-agent</goal>
+                                    </goals>
+                                    <configuration>
+                                        <skip>${skipUnitTests}</skip>
+                                        <destFile>${project.build.directory}/jacoco.exec</destFile>
+                                        <propertyName>testAgent</propertyName>
+                                    </configuration>
+                                </execution>
+
+                                <!-- After running unit tests -->
+                                <execution>
+                                    <id>postTest</id>
+                                    <phase>test</phase>
+                                    <goals>
+                                        <goal>report</goal>
+                                    </goals>
+                                    <configuration>
+                                        <skip>${skipUnitTests}</skip>
+                                        <dataFile>${project.build.directory}/jacoco.exec</dataFile>
+                                    </configuration>
+                                </execution>
+                            </executions>
+                        </plugin>
+
+                        <!-- Update SureFire (already bound to test phase) -->
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-surefire-plugin</artifactId>
+                            <configuration>
+                                <argLine>@{testAgent} ${jvmArgs}</argLine>
+                                <skipTests>${skipUnitTests}</skipTests>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+
+                <!-- Use in lifecycle -->
+                <plugins>
+                    <plugin>
+                        <groupId>org.jacoco</groupId>
+                        <artifactId>jacoco-maven-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- Run IT test with code coverage -->
+        <profile>
+            <id>integration-test</id>
+            <activation>
+                <file>
+                    <exists>${basedir}/src/test</exists>
+                </file>
+            </activation>
+            <properties>
+                <itAgent></itAgent>
+            </properties>
+            <build>
+                <pluginManagement>
+                    <plugins>
+
+                        <!-- Code Coverage -->
+                        <plugin>
+                            <groupId>org.jacoco</groupId>
+                            <artifactId>jacoco-maven-plugin</artifactId>
+                            <configuration>
+                                <excludes>
+                                    <exclude>${sonar.coverage.exclusions}</exclude>
+                                </excludes>
+                            </configuration>
+                            <executions>
+
+                                <!-- Before running integration tests -->
+                                <execution>
+                                    <id>preIT</id>
+                                    <phase>pre-integration-test</phase>
+                                    <goals>
+                                        <goal>prepare-agent-integration</goal>
+                                    </goals>
+                                    <configuration>
+                                        <skip>${skipIntegrationTests}</skip>
+                                        <destFile>${project.build.directory}/jacoco-it.exec</destFile>
+                                        <propertyName>itAgent</propertyName>
+                                    </configuration>
+                                </execution>
+
+                                <!-- After running integration tests -->
+                                <execution>
+                                    <id>postIT</id>
+                                    <phase>post-integration-test</phase>
+                                    <goals>
+                                        <goal>report-integration</goal>
+                                    </goals>
+                                    <configuration>
+                                        <skip>${skipIntegrationTests}</skip>
+                                        <dataFile>${project.build.directory}/jacoco-it.exec</dataFile>
+                                    </configuration>
+                                </execution>
+                            </executions>
+                        </plugin>
+
+                        <!-- Use FailSafe to run integration tests -->
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-failsafe-plugin</artifactId>
+                            <configuration>
+                                <argLine>@{itAgent} ${jvmArgs}</argLine>
+                                <skipTests>${skipIntegrationTests}</skipTests>
+                            </configuration>
+                            <executions>
+                                <execution>
+                                    <goals>
+                                        <goal>integration-test</goal>
+                                        <goal>verify</goal>
+                                    </goals>
+                                </execution>
+                            </executions>
+                        </plugin>
+                        <!-- Include Jetty Plugin for integration testing -->
+                        <plugin>
+                            <groupId>org.eclipse.jetty</groupId>
+                            <artifactId>jetty-maven-plugin</artifactId>
+                            <version>9.4.11.v20180605</version>
+                            <configuration>
+                                <scanIntervalSeconds>0</scanIntervalSeconds>
+                                <stopKey>stop</stopKey>
+                                <stopPort>9999</stopPort>
+                                <webAppConfig>
+                                    <war>${project.basedir}/target/${project.artifactId}-${project.version}.war</war>
+                                    <contextPath>/rest2ldap</contextPath>
+                                </webAppConfig>
+                            </configuration>
+                            <executions>
+
+                                <!-- Before integration tests -->
+                                <execution>
+                                    <id>preIT</id>
+                                    <phase>pre-integration-test</phase>
+                                    <goals>
+                                        <goal>start</goal>
+                                    </goals>
+                                    <configuration>
+                                        <skip>${skipIntegrationTests}</skip>
+                                    </configuration>
+                                </execution>
+
+                                <!-- After integration tests -->
+                                <execution>
+                                    <id>postIT</id>
+                                    <phase>post-integration-test</phase>
+                                    <goals>
+                                        <goal>stop</goal>
+                                    </goals>
+                                </execution>
+                            </executions>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+
+                <!-- Use in lifecycle -->
+                <plugins>
+                    <plugin>
+                        <groupId>org.jacoco</groupId>
+                        <artifactId>jacoco-maven-plugin</artifactId>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.eclipse.jetty</groupId>
+                        <artifactId>jetty-maven-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+
+    </profiles>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-ldap</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-rest</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>2.6</version>
+            <scope>compile</scope>
+        </dependency>
 
         <dependency>
             <groupId>org.springframework.ldap</groupId>
@@ -87,20 +414,37 @@
             <artifactId>shared-ldap</artifactId>
             <version>0.9.15</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.apache.maven.surefire</groupId>
+            <artifactId>surefire-logger-api</artifactId>
+            <version>2.22.0</version>
+        </dependency>
+        <!-- JUnit -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
+        <!--  JaCoCo -->
+        <dependency>
+            <groupId>org.jacoco</groupId>
+            <artifactId>org.jacoco.agent</artifactId>
+            <classifier>runtime</classifier>
+            <version>0.8.2</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-			</plugin>
+    <build>
+        <plugins>
+
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <encoding>${project.build.sourceEncoding}</encoding>
                 </configuration>
             </plugin>
             <plugin>
@@ -110,19 +454,205 @@
                     <failOnMissingWebXml>false</failOnMissingWebXml>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.eclipse.jetty</groupId>
-                <artifactId>jetty-maven-plugin</artifactId>
-                <version>9.4.11.v20180605</version>
-                <configuration>
-                    <webAppConfig>
-                        <contextPath>/rest2ldap</contextPath>
-                    </webAppConfig>
-                </configuration>
-            </plugin>
-
+            <!--<plugin>-->
+                <!--<groupId>org.eclipse.jetty</groupId>-->
+                <!--<artifactId>jetty-maven-plugin</artifactId>-->
+                <!--<version>9.4.11.v20180605</version>-->
+                <!--<configuration>-->
+                    <!--<webAppConfig>-->
+                        <!--<contextPath>/rest2ldap</contextPath>-->
+                    <!--</webAppConfig>-->
+                <!--</configuration>-->
+            <!--</plugin>-->
         </plugins>
-	</build>
+    </build>
 
+
+    <!--<profiles>-->
+    <!--&lt;!&ndash; Test Profile - Runs JUnit tests for all modules that have tests &ndash;&gt;-->
+    <!--<profile>-->
+    <!--<id>test</id>-->
+    <!--<properties>-->
+    <!--<maven.test.skip>false</maven.test.skip>-->
+    <!--</properties>-->
+    <!--<build>-->
+    <!--&lt;!&ndash; Executed Plugins &ndash;&gt;-->
+    <!--<plugins>-->
+    <!--&lt;!&ndash; JUnit Settings &ndash;&gt;-->
+    <!--<plugin>-->
+    <!--<groupId>org.apache.maven.plugins</groupId>-->
+    <!--<artifactId>maven-surefire-plugin</artifactId>-->
+    <!--<version>2.22.0</version>-->
+    <!--<configuration>-->
+    <!--<forkCount>1C</forkCount>-->
+    <!--<reuseForks>true</reuseForks>-->
+    <!--<parallel>suitesAndClasses</parallel>-->
+    <!--<threadCount>4</threadCount>-->
+    <!--<argLine>-XX:+TieredCompilation -XX:TieredStopAtLevel=1</argLine>-->
+    <!--<systemPropertyVariables>-->
+    <!--<jacoco-agent.destfile>target/jacoco.exec</jacoco-agent.destfile>-->
+    <!--</systemPropertyVariables>-->
+    <!--<trimStackTrace>false</trimStackTrace>-->
+    <!--<additionalClasspathElements>-->
+    <!--<additionalClasspathElement>${basedir}/src/test/resources</additionalClasspathElement>-->
+    <!--</additionalClasspathElements>-->
+    <!--</configuration>-->
+    <!--<executions>-->
+    <!--<execution>-->
+    <!--<id>surefire-junit</id>-->
+    <!--<phase>test</phase>-->
+    <!--<goals>-->
+    <!--<goal>test</goal>-->
+    <!--</goals>-->
+    <!--</execution>-->
+    <!--</executions>-->
+    <!--</plugin>-->
+    <!--</plugins>-->
+    <!--&lt;!&ndash; All JUnit resources come from the source resources &ndash;&gt;-->
+    <!--<testResources>-->
+    <!--<testResource>-->
+    <!--<directory>src/main/resources</directory>-->
+    <!--<filtering>true</filtering>-->
+    <!--</testResource>-->
+    <!--</testResources>-->
+    <!--</build>-->
+    <!--<dependencies>-->
+    <!--<dependency>-->
+    <!--<groupId>org.apache.maven.surefire</groupId>-->
+    <!--<artifactId>surefire-logger-api</artifactId>-->
+    <!--<version>2.22.0</version>-->
+    <!--</dependency>-->
+    <!--&lt;!&ndash; JUnit &ndash;&gt;-->
+    <!--<dependency>-->
+    <!--<groupId>junit</groupId>-->
+    <!--<artifactId>junit</artifactId>-->
+    <!--<version>4.12</version>-->
+    <!--<scope>test</scope>-->
+    <!--</dependency>-->
+    <!--&lt;!&ndash; LDAP Plugin dependencies required for embeded LDAP testing&ndash;&gt;-->
+    <!--<dependency>-->
+    <!--<groupId>org.apache.directory.server</groupId>-->
+    <!--<artifactId>apacheds-core</artifactId>-->
+    <!--<version>1.5.5</version>-->
+    <!--</dependency>-->
+    <!--<dependency>-->
+    <!--<groupId>org.apache.directory.server</groupId>-->
+    <!--<artifactId>apacheds-core-entry</artifactId>-->
+    <!--<version>1.5.5</version>-->
+    <!--</dependency>-->
+    <!--<dependency>-->
+    <!--<groupId>org.apache.directory.server</groupId>-->
+    <!--<artifactId>apacheds-protocol-ldap</artifactId>-->
+    <!--<version>1.5.5</version>-->
+    <!--</dependency>-->
+    <!--<dependency>-->
+    <!--<groupId>org.apache.directory.server</groupId>-->
+    <!--<artifactId>apacheds-protocol-shared</artifactId>-->
+    <!--<version>1.5.5</version>-->
+    <!--</dependency>-->
+    <!--<dependency>-->
+    <!--<groupId>org.apache.directory.server</groupId>-->
+    <!--<artifactId>apacheds-server-jndi</artifactId>-->
+    <!--<version>1.5.5</version>-->
+    <!--</dependency>-->
+    <!--<dependency>-->
+    <!--<groupId>org.apache.directory.shared</groupId>-->
+    <!--<artifactId>shared-ldap</artifactId>-->
+    <!--<version>0.9.15</version>-->
+    <!--</dependency>-->
+    <!--<dependency>-->
+    <!--<groupId>org.springframework.ldap</groupId>-->
+    <!--<artifactId>spring-ldap-test</artifactId>-->
+    <!--<version>2.3.2.RELEASE</version>-->
+    <!--</dependency>-->
+    <!--<dependency>-->
+    <!--<groupId>commons-lang</groupId>-->
+    <!--<artifactId>commons-lang</artifactId>-->
+    <!--<version>2.6</version>-->
+    <!--<scope>compile</scope>-->
+    <!--</dependency>-->
+
+    <!--</dependencies>-->
+    <!--</profile>-->
+
+    <!--<profile>-->
+    <!--<id>coverage</id>-->
+    <!--<build>-->
+    <!--&lt;!&ndash; Executed Plugins &ndash;&gt;-->
+    <!--<plugins>-->
+    <!--&lt;!&ndash;  JaCoCo Code Coverage &ndash;&gt;-->
+    <!--<plugin>-->
+    <!--<groupId>org.jacoco</groupId>-->
+    <!--<artifactId>jacoco-maven-plugin</artifactId>-->
+    <!--<version>0.8.1</version>-->
+    <!--<configuration>-->
+    <!--<excludes>-->
+    <!--<exclude>**/jaxws/*.class</exclude>-->
+    <!--</excludes>-->
+    <!--</configuration>-->
+    <!--<executions>-->
+    <!--<execution>-->
+    <!--<id>jacoco-instrument</id>-->
+    <!--<goals>-->
+    <!--<goal>instrument</goal>-->
+    <!--</goals>-->
+    <!--</execution>-->
+    <!--<execution>-->
+    <!--<id>jacoco-restore-instrumented-classes</id>-->
+    <!--<goals>-->
+    <!--<goal>restore-instrumented-classes</goal>-->
+    <!--</goals>-->
+    <!--</execution>-->
+    <!--<execution>-->
+    <!--<id>jacoco-report</id>-->
+    <!--<phase>package</phase>-->
+    <!--<goals>-->
+    <!--<goal>report</goal>-->
+    <!--</goals>-->
+    <!--</execution>-->
+    <!--</executions>-->
+    <!--</plugin>-->
+    <!--</plugins>-->
+    <!--</build>-->
+    <!--<dependencies>-->
+    <!--&lt;!&ndash;  JaCoCo &ndash;&gt;-->
+    <!--<dependency>-->
+    <!--<groupId>org.jacoco</groupId>-->
+    <!--<artifactId>org.jacoco.agent</artifactId>-->
+    <!--<classifier>runtime</classifier>-->
+    <!--<version>0.8.2</version>-->
+    <!--<scope>test</scope>-->
+    <!--</dependency>-->
+    <!--</dependencies>-->
+    <!--</profile>-->
+    <!--&lt;!&ndash;  Sonar Profile - runs SonarQube static code analysis &ndash;&gt;-->
+    <!--&lt;!&ndash;  Requires the 'coverage' profile to be executed also &ndash;&gt;-->
+    <!--<profile>-->
+    <!--<id>sonar</id>-->
+    <!--<properties>-->
+
+    <!--</properties>-->
+    <!--<build>-->
+    <!--&lt;!&ndash; Executed Plugins &ndash;&gt;-->
+    <!--<plugins>-->
+    <!--&lt;!&ndash;  SonarQube Code Analysis &ndash;&gt;-->
+    <!--<plugin>-->
+    <!--<groupId>org.sonarsource.scanner.maven</groupId>-->
+    <!--<artifactId>sonar-maven-plugin</artifactId>-->
+    <!--<version>3.5.0.1254</version>-->
+    <!--<executions>-->
+    <!--<execution>-->
+    <!--<id>sonar-sonar</id>-->
+    <!--<phase>package</phase>-->
+    <!--<goals>-->
+    <!--<goal>sonar</goal>-->
+    <!--</goals>-->
+    <!--</execution>-->
+    <!--</executions>-->
+    <!--</plugin>-->
+    <!--</plugins>-->
+    <!--</build>-->
+    <!--</profile>-->
+    <!--</profiles>-->
 
 </project>
