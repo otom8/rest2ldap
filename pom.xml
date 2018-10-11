@@ -30,40 +30,141 @@
         <skipUnitTests>${skipTests}</skipUnitTests>
         <skipIntegrationTests>${skipTests}</skipIntegrationTests>
         <jvmArgs></jvmArgs>
+        <jacoco.version>0.8.2</jacoco.version>
+
+        <!-- Jetty Server Config-->
+        <javaeeWebApi.version>8.0</javaeeWebApi.version>
+        <itServerId>jetty9x</itServerId>
+        <itServerPort>8080</itServerPort>
+        <itServerDumpPort>6300</itServerDumpPort>
+        <itServerContext>/${project.artifactId}</itServerContext>
+        <appJvmArgs></appJvmArgs>
+
+        <!-- Jetty Config -->
+        <jetty.version>9.4.11.v20180605</jetty.version>
+        <jetty.port>9090</jetty.port>
+        <jetty.port.stop>9099</jetty.port.stop>
 
         <!-- Static code analysis -->
         <sonar.coverage.exclusions>**/application/config/*</sonar.coverage.exclusions>
+        <sonar.plugin.version>3.5.0.1254</sonar.plugin.version>
+        <!-- OWASP Dependency Check -->
+
     </properties>
 
     <profiles>
-        <!--<profile>-->
-            <!--<id>dev</id>-->
-            <!--<activation>-->
-                <!--<activeByDefault>true</activeByDefault>-->
-            <!--</activation>-->
-        <!--</profile>-->
-        <!--<profile>-->
-            <!--<id>test</id>-->
-            <!--<properties>-->
-                <!--&lt;!&ndash;-->
-                   <!--Only end-to-end tests are run when the end-to-end-test profile is active-->
-                <!--&ndash;&gt;-->
-                <!--<junit.category>com.testwithspring.intermediate.EndToEndTest</junit.category>-->
-                <!--<skip.failsafe.plugin>false</skip.failsafe.plugin>-->
-                <!--<skip.unit.tests>true</skip.unit.tests>-->
-            <!--</properties>-->
-        <!--</profile>-->
-        <!--<profile>-->
-            <!--<id>integration-test</id>-->
-            <!--<properties>-->
-                <!--&lt;!&ndash;-->
-                    <!--Only integration tests are run when the integration-test profile is active-->
-                <!--&ndash;&gt;-->
-                <!--<junit.category>com.testwithspring.intermediate.IntegrationTest</junit.category>-->
-                <!--<skip.failsafe.plugin>false</skip.failsafe.plugin>-->
-                <!--<skip.unit.tests>true</skip.unit.tests>-->
-            <!--</properties>-->
-        <!--</profile>-->
+
+        <!-- Static code analysis -->
+        <profile>
+            <id>sonar</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.sonarsource.scanner.maven</groupId>
+                        <artifactId>sonar-maven-plugin</artifactId>
+                        <version>${sonar.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>sonar-sonar</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>sonar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- Security and Vulnerability Scans -->
+        <!-- OWASP Dependency Check -->
+        <profile>
+            <id>owasp-dependency-check</id>
+            <activation>
+                <file>
+                    <exists>${basedir}/src</exists>
+                </file>
+            </activation>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>org.owasp</groupId>
+                            <artifactId>dependency-check-maven</artifactId>
+                            <version>3.3.2</version>
+                            <configuration>
+                                <failBuildOnCVSS>8</failBuildOnCVSS>
+                            </configuration>
+                            <executions>
+                                <execution>
+                                    <goals>
+                                        <goal>check</goal>
+                                    </goals>
+                                </execution>
+                            </executions>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+                <plugins>
+                    <plugin>
+                        <groupId>org.owasp</groupId>
+                        <artifactId>dependency-check-maven</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- SpotBug Analysis -->
+        <profile>
+            <id>spotbug</id>
+            <activation>
+                <file>
+                    <exists>${basedir}/src</exists>
+                </file>
+            </activation>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>com.github.spotbugs</groupId>
+                            <artifactId>spotbugs-maven-plugin</artifactId>
+                            <version>3.1.6</version>
+                            <configuration>
+                                <effort>Max</effort>
+                                <threshold>Low</threshold>
+                                <failOnError>false</failOnError>
+                                <xmlOutput>true</xmlOutput>
+                                <xmlOutputDirectory>target/site</xmlOutputDirectory>
+                            </configuration>
+                            <executions>
+                                <execution>
+                                    <goals>
+                                        <goal>check</goal>
+                                    </goals>
+                                </execution>
+                            </executions>
+                        </plugin>
+                        <plugin>
+                            <groupId>com.h3xstream.findsecbugs</groupId>
+                            <artifactId>findsecbugs-plugin</artifactId>
+                            <version>1.8.0</version>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+                <plugins>
+                    <plugin>
+                    <groupId>com.github.spotbugs</groupId>
+                    <artifactId>spotbugs-maven-plugin</artifactId>
+                    </plugin>
+                    <plugin>
+                        <groupId>com.h3xstream.findsecbugs</groupId>
+                        <artifactId>findsecbugs-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
         <!-- Compile with debugging info -->
         <profile>
             <id>compile-with-debug</id>
@@ -114,7 +215,8 @@
                                 <prefix>git</prefix>
                                 <verbose>false</verbose>
                                 <generateGitPropertiesFile>true</generateGitPropertiesFile>
-                                <generateGitPropertiesFilename>${project.build.directory}/git.properties</generateGitPropertiesFilename>
+                                <generateGitPropertiesFilename>${project.build.directory}/git.properties
+                                </generateGitPropertiesFilename>
                                 <format>json</format>
                                 <gitDescribe>
                                     <skip>false</skip>
@@ -122,12 +224,12 @@
                                     <dirty>-dirty</dirty>
                                 </gitDescribe>
                                 <!--<validationProperties>-->
-                                    <!--&lt;!&ndash; verify that the current repository is not dirty &ndash;&gt;-->
-                                    <!--<validationProperty>-->
-                                        <!--<name>validating git dirty</name>-->
-                                        <!--<value>${git.dirty}</value>-->
-                                        <!--<shouldMatchTo>false</shouldMatchTo>-->
-                                    <!--</validationProperty>-->
+                                <!--&lt;!&ndash; verify that the current repository is not dirty &ndash;&gt;-->
+                                <!--<validationProperty>-->
+                                <!--<name>validating git dirty</name>-->
+                                <!--<value>${git.dirty}</value>-->
+                                <!--<shouldMatchTo>false</shouldMatchTo>-->
+                                <!--</validationProperty>-->
                                 <!--</validationProperties>-->
                                 <failOnNoGitDirectory>false</failOnNoGitDirectory>
                             </configuration>
@@ -216,6 +318,7 @@
                     <plugin>
                         <groupId>org.jacoco</groupId>
                         <artifactId>jacoco-maven-plugin</artifactId>
+                        <version>${jacoco.version}</version>
                     </plugin>
                 </plugins>
             </build>
@@ -231,6 +334,7 @@
             </activation>
             <properties>
                 <itAgent></itAgent>
+                <itServerHome>${project.build.directory}/${itServerId}</itServerHome>
             </properties>
             <build>
                 <pluginManagement>
@@ -240,11 +344,6 @@
                         <plugin>
                             <groupId>org.jacoco</groupId>
                             <artifactId>jacoco-maven-plugin</artifactId>
-                            <configuration>
-                                <excludes>
-                                    <exclude>${sonar.coverage.exclusions}</exclude>
-                                </excludes>
-                            </configuration>
                             <executions>
 
                                 <!-- Before running integration tests -->
@@ -257,7 +356,7 @@
                                     <configuration>
                                         <skip>${skipIntegrationTests}</skip>
                                         <destFile>${project.build.directory}/jacoco-it.exec</destFile>
-                                        <propertyName>itAgent</propertyName>
+                                        <propertyName>argLine</propertyName>
                                     </configuration>
                                 </execution>
 
@@ -266,10 +365,12 @@
                                     <id>postIT</id>
                                     <phase>post-integration-test</phase>
                                     <goals>
+                                        <goal>dump</goal>
                                         <goal>report-integration</goal>
                                     </goals>
                                     <configuration>
                                         <skip>${skipIntegrationTests}</skip>
+                                        <port>${jetty.port}</port>
                                         <dataFile>${project.build.directory}/jacoco-it.exec</dataFile>
                                     </configuration>
                                 </execution>
@@ -297,11 +398,14 @@
                         <plugin>
                             <groupId>org.eclipse.jetty</groupId>
                             <artifactId>jetty-maven-plugin</artifactId>
-                            <version>9.4.11.v20180605</version>
+                            <version>${jetty.version}</version>
                             <configuration>
+                                <httpConnector>
+                                    <port>${jetty.port}</port>
+                                </httpConnector>
                                 <scanIntervalSeconds>0</scanIntervalSeconds>
                                 <stopKey>stop</stopKey>
-                                <stopPort>9999</stopPort>
+                                <stopPort>${jetty.port.stop}</stopPort>
                                 <webAppConfig>
                                     <war>${project.basedir}/target/${project.artifactId}-${project.version}.war</war>
                                     <contextPath>/rest2ldap</contextPath>
@@ -339,6 +443,7 @@
                     <plugin>
                         <groupId>org.jacoco</groupId>
                         <artifactId>jacoco-maven-plugin</artifactId>
+                        <version>${jacoco.version}</version>
                     </plugin>
                     <plugin>
                         <groupId>org.eclipse.jetty</groupId>
@@ -431,9 +536,16 @@
             <groupId>org.jacoco</groupId>
             <artifactId>org.jacoco.agent</artifactId>
             <classifier>runtime</classifier>
-            <version>0.8.2</version>
+            <version>${jacoco.version}</version>
             <scope>test</scope>
         </dependency>
+        <!-- Sonar -->
+        <dependency>
+            <groupId>org.sonarsource.scanner.maven</groupId>
+            <artifactId>sonar-maven-plugin</artifactId>
+            <version>${sonar.plugin.version}</version>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -454,16 +566,6 @@
                     <failOnMissingWebXml>false</failOnMissingWebXml>
                 </configuration>
             </plugin>
-            <!--<plugin>-->
-                <!--<groupId>org.eclipse.jetty</groupId>-->
-                <!--<artifactId>jetty-maven-plugin</artifactId>-->
-                <!--<version>9.4.11.v20180605</version>-->
-                <!--<configuration>-->
-                    <!--<webAppConfig>-->
-                        <!--<contextPath>/rest2ldap</contextPath>-->
-                    <!--</webAppConfig>-->
-                <!--</configuration>-->
-            <!--</plugin>-->
         </plugins>
     </build>
 
@@ -625,8 +727,8 @@
     <!--</dependency>-->
     <!--</dependencies>-->
     <!--</profile>-->
-    <!--&lt;!&ndash;  Sonar Profile - runs SonarQube static code analysis &ndash;&gt;-->
-    <!--&lt;!&ndash;  Requires the 'coverage' profile to be executed also &ndash;&gt;-->
+    <!--  Sonar Profile - runs SonarQube static code analysis -->
+    <!--  Requires the 'coverage' profile to be executed also -->
     <!--<profile>-->
     <!--<id>sonar</id>-->
     <!--<properties>-->
